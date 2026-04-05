@@ -1,23 +1,23 @@
 # esp32-ads1263
 
-Rozbudowany sterownik `ADS1263` dla ESP32 z obsługą rejestrów, komend i konfiguracji toru analogowego.
+Advanced `ADS1263` driver for ESP32 with register access, command handling, and analog front-end configuration helpers.
 
-## Co zawiera
-- funkcje odczytu i zapisu rejestrów
-- komendy sterujące `START`, `STOP`, `RESET`
-- konfigurację `MODE0`, `MODE1`, `MODE2`, `INPMUX`, `IDACMUX` i pozostałych rejestrów
+## Features
+- register read and write helpers
+- control commands such as `START`, `STOP`, and `RESET`
+- configuration for `MODE0`, `MODE1`, `MODE2`, `INPMUX`, `IDACMUX`, and related registers
 
-## Zależności
-- do repo jest dołączony prosty helper `spi.h` / `spi.c`
-- opcjonalnie `esp32-uart-xor`
+## Dependencies
+- the repository includes a simple `spi.h` / `spi.c` helper
+- optional `esp32-uart-xor`
 
-## Pliki
+## Files
 - `include/ads1263.h`
 - `include/spi.h`
 - `src/ads1263.c`
 - `src/spi.c`
 
-## Szybki start
+## Quick start
 ```c
 #include "ads1263.h"
 #include "spi.h"
@@ -31,4 +31,4 @@ void app_main(void)
 }
 ```
 
-Pełny przykład znajdziesz w `examples/basic_usage/basic_usage.c`.
+See `examples/basic_usage/basic_usage.c` for a complete example.
