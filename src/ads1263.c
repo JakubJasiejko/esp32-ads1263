@@ -1,3 +1,8 @@
+/**
+ * @file ads1263.c
+ * @brief ADS1263 driver implementation.
+ */
+
 #include "ads1263.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -11,10 +16,18 @@
 #include <string.h>
 #include <stdio.h>
 
+/**
+ * @brief DRDY interrupt handler.
+ *
+ * @param arg Unused ISR argument
+ */
 static void IRAM_ATTR drdy_isr_handler(void* arg) {
     drdy_flag = true;
 }
 
+/**
+ * @brief Returns true when the DRDY interrupt has fired.
+ */
 bool ads1263_data_ready() {
     if (drdy_flag) {
         drdy_flag = false;
@@ -36,8 +49,8 @@ uint32_t ads1263_readReg(uint8_t reg, uint8_t index) {
 
 uint8_t ads1263_writeReg(uint8_t reg, uint8_t data, int index) {
     uint8_t cmd[3];
-    cmd[0] = ADS1263_WREG | reg ;  // WREG z adresem rejestru
-    cmd[1] = 0x00;                         // tylko jeden bajt do zapisu
+    cmd[0] = ADS1263_WREG | reg;  // WREG command with register address
+    cmd[1] = 0x00;                // One data byte follows
     cmd[2] = data;
 
     return spi_write24(cmd, index);
@@ -45,7 +58,7 @@ uint8_t ads1263_writeReg(uint8_t reg, uint8_t data, int index) {
 
 
 uint8_t ads1263_sendCommand(uint8_t cmd, int index) {
-    return spi_write(&cmd, index);  // cmd jako wskaźnik
+    return spi_write(&cmd, index);  // Pass the command byte by address
 }
 
 void ads1263_reset(gpio_num_t RESET_PIN) {
@@ -125,7 +138,7 @@ uint8_t ads1263_setMode2Reg(int index, uint8_t bypass, uint8_t gain, uint8_t dat
 uint32_t ads1263_readMode2Reg(int index) {
     return ads1263_readReg(ADS1263_MODE2, index);
 }
-//REKONFIG
+// Register reconfiguration helpers
 uint8_t ads1263_setInputMuxReg(int index, uint8_t muxp, uint8_t muxn) {
     uint8_t reg_value = (muxp << 4) | muxn;
     return ads1263_writeReg(ADS1263_INPMUX, reg_value, index);
@@ -208,12 +221,12 @@ uint32_t ads1263_readGPIODATReg(int index) {
 }
 
 int32_t ads1263_voltage_to_bin(double voltage_offset, double vref) {
-    // Obliczamy wartość offsetu jako 24-bit signed (2's complement)
-    // zakres: ±(2^23 - 1)
+    // Convert the offset into a signed 24-bit value (two's complement).
+    // Range: ±(2^23 - 1)
     double scale = (double)(1 << 23);  // 2^23 = 8,388,608
     double raw = (voltage_offset / vref) * scale;
 
-    // Zaokrąglenie i ograniczenie do zakresu 24-bit signed
+    // Round and clamp to the signed 24-bit range.
     if (raw > 8388607.0)
         raw = 8388607.0;
     else if (raw < -8388608.0)
@@ -238,7 +251,7 @@ uint8_t ads1263_setOffsetReg(int index, double voltage_offset, double vref) {
 }
 
 uint8_t ads1263_setFullscaleReg(int index, double fullscale_voltage, double vref) {
-    int32_t bin = ads1263_voltage_to_bin(fullscale_voltage, vref);  // ta sama konwersja jak offset
+    int32_t bin = ads1263_voltage_to_bin(fullscale_voltage, vref);  // Same conversion as offset
 
     uint8_t byte0 = (bin >> 16) & 0xFF;  // MSB
     uint8_t byte1 = (bin >> 8) & 0xFF;
@@ -251,7 +264,7 @@ uint8_t ads1263_setFullscaleReg(int index, double fullscale_voltage, double vref
     return 0x00;
 }
 
-//Ta funkcja jest 3 bitowa (24 bajtowa!) jesli chce CRC itp to musze dac wiecej
+// This helper reads the 32-bit data frame returned by RDATA1.
 uint32_t ads1263_readData(int index) {
     uint8_t tx_buf[5] = { ADS1263_RDATA1, 0xFF, 0xFF, 0xFF, 0xFF };
     uint8_t rx_buf[5] = { 0 };
@@ -259,7 +272,7 @@ uint32_t ads1263_readData(int index) {
     if (spi_read(tx_buf, rx_buf, 5, index) != 0x00)
         return 0xFFFFFFFF;
 
-    // Pomijamy pierwszy bajt (status), używamy 4 bajty danych
+    // Skip the first byte (status) and use the next four bytes as data.
     uint32_t value = ((uint32_t)rx_buf[1] << 24) |
                      ((uint32_t)rx_buf[2] << 16) |
                      ((uint32_t)rx_buf[3] << 8)  |
@@ -292,26 +305,26 @@ if (addSpiDevice(cs_pin, index) == 0xFF){
     ads1263_reset(RESET_PIN);
     vTaskDelay(pdMS_TO_TICKS(100));
     
-// 1. Ustawienia mocy i referencji
-ads1263_setPowerReg(index, ADS1263_RESET_RST_BIT, ADS1263_DISABLE_VBIAS, ADS1263_DISABLE_INTREF); // zewnętrzne VREF
+// 1. Power and reference configuration
+ads1263_setPowerReg(index, ADS1263_RESET_RST_BIT, ADS1263_DISABLE_VBIAS, ADS1263_DISABLE_INTREF); // External VREF
 
-// 2. Interfejs (opcjonalnie z CRC i bitem statusu)
+// 2. Interface configuration
 ads1263_setInterfaceReg(index, ADS1263_TIMEOUT_DISABLE, ADS1263_STATUS_DISABLE, ADS1263_CRC_DISABLE);
 
-// 3. Tryb pracy: one-shot, brak chop, brak opóźnień
+// 3. Operating mode: continuous conversion, no chop, no startup delay
 ads1263_setMode0Reg(index, ADS1263_REFREV_DISABLE, ADS1263_MODE_CONTINOUS, ADS1263_CHOP_MODE_ALL_DISABLE, ADS1263_DELAY_0US);
 
-// 4. Tryb filtrowania: SINC1 dla maks. szybkości odczytu, bez biasu
+// 4. Filter setup: SINC1 for the highest readout speed, no sensor bias
 ads1263_setMode1Reg(index, ADS1263_FILTER_SINC1, ADS1263_SBADC_ADC1, ADS1263_SBPOL_PULLDOWN, ADS1263_SBMAG_NONE);
 
-// 5. Wyłączenie PGA (bo wejście 0-3.3V, pełna skala) + 20 SPS lub inny żadany sampling rate
+// 5. Disable the PGA for a 0-3.3 V full-scale input and select the data rate
 ads1263_setMode2Reg(index, ADS1263_PGA_BYPASSED, ADS1263_GAIN_1, ADS1263_DR_38400SPS);
 
-// 6. MUX wejściowy - wejście różnicowe AIN0 - AIN1
+// 6. Input mux: differential input AIN0 - AIN1
 ads1263_setInputMuxReg(index, ADS1263_MUXP_AIN0, ADS1263_MUXN_AIN1);
 
-// 7. MUX referencji - zewnętrzne REFP / REFN
-ads1263_setRefMuxReg(index, ADS1263_REF_MUXP_AVDD, ADS1263_REF_MUXN_AVSS); // lub inny REFPx/REFNx zgodny z podłączeniem
+// 7. Reference mux
+ads1263_setRefMuxReg(index, ADS1263_REF_MUXP_AVDD, ADS1263_REF_MUXN_AVSS); // Adjust to your actual REFPx/REFNx wiring
 
 
 

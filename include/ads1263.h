@@ -1,3 +1,7 @@
+/**
+ * @file ads1263.h
+ * @brief Public interface and register definitions for the ADS1263 driver.
+ */
 #ifndef ADS1263_H
 #define ADS1263_H
 
@@ -11,7 +15,7 @@
 #define ADS1263_WREG 0x40
 
 
-//komendy
+// Commands
 #define ADS1263_NOP        0b00000000
 #define ADS1263_RESET      0b00000110
 #define ADS1263_START1     0b00001000
@@ -21,7 +25,7 @@
 #define ADS1263_RDATA1     0b00010010
 #define ADS1263_RDATA2     0b00010100
 
-//rejestry
+// Register addresses
 #define ADS1263_POWER       0x01
 #define ADS1263_INTERFACE   0x02
 #define ADS1263_MODE0       0x03
@@ -50,33 +54,32 @@
 #define ADS1263_ADC2FSC1    0x1A
 
 // == POWER REGISTER ==
-// Rejestr konfiguracji zasilania i źródeł odniesienia w ADC
+// ADC power and reference configuration register
 
-// Bit RESET – (bit 4): sygnalizuje, czy nastąpił reset urządzenia (np. po soft/hard resecie)
-// Wartość 1 oznacza, że wystąpił reset – można go wyczyścić, ustawiając 0
-#define ADS1263_RESET_RST_BIT 0b0  // Ustawienie 0 – czyści flagę resetu
+// RESET bit (bit 4): indicates whether a device reset occurred.
+// Writing 0 clears the reset flag.
+#define ADS1263_RESET_RST_BIT 0b0  // Clear the reset flag
 
 // == VBIAS – bias voltage enable (bit 1) ==
-// Źródło napięcia odniesienia ~1/2 AVDD podłączone do AINCOM
-// Przydatne, gdy nie masz stałej referencji odniesienia względem masy
-#define ADS1263_DISABLE_VBIAS 0b0  // Wyłączone – AINCOM pozostaje niepodłączony
-#define ADS1263_ENABLE_VBIAS  0b1  // Włączone – ~AVDD/2 trafia na AINCOM
+// Bias voltage source (~1/2 AVDD) routed to AINCOM.
+#define ADS1263_DISABLE_VBIAS 0b0  // Disabled
+#define ADS1263_ENABLE_VBIAS  0b1  // Enabled
 
 // == INTREF – internal reference enable (bit 0) ==
-// Wewnętrzne źródło odniesienia 2.5 V do użycia z REFPx/REFNx (np. REFP1/REFN1)
-#define ADS1263_DISABLE_INTREF 0b0  // Korzystasz z zewnętrznego źródła referencyjnego
-#define ADS1263_ENABLE_INTREF  0b1  // Włącz wewnętrzne 2.5 V VREF (np. jeśli nie masz zewnętrznego VREF)
+// Internal 2.5 V reference source.
+#define ADS1263_DISABLE_INTREF 0b0  // Use an external reference
+#define ADS1263_ENABLE_INTREF  0b1  // Use the internal 2.5 V reference
 
 // == INTERFACE REGISTER ==
-//rejestr konfiguracji interfejsu, danych dodatkowych (timeout, bit statusu, sumy kontrolnej)
+// Interface register controlling timeout, status byte, and CRC options
 
-#define ADS1263_TIMEOUT_ENABLE 0b1 //timeout
+#define ADS1263_TIMEOUT_ENABLE 0b1
 #define ADS1263_TIMEOUT_DISABLE 0b0
 
-#define ADS1263_STATUS_DISABLE 0b0 //bit statusu (np.: obsługa błędów)
+#define ADS1263_STATUS_DISABLE 0b0
 #define ADS1263_STATUS_ENABLE 0b1
 
-#define ADS1263_CRC_DISABLE 0b00 //suma kontrolna, patrz str.90 dokumentacji
+#define ADS1263_CRC_DISABLE 0b00
 #define ADS1263_CRC_MODE1 0b01
 #define ADS1263_CRC_MODE2 0b10
 #define ADS1263_CRC_MODE3 0b10
@@ -84,13 +87,13 @@
 
 
 // == MODE 0 REGISTER ==
-//ustawienie 1 rejestru char. działania
+// MODE0 register
 
-#define ADS1263_REFREV_DISABLE 0b0 //obrócenie polaryzacji multipleksera referencyjnego wyłączone
+#define ADS1263_REFREV_DISABLE 0b0
 #define ADS1263_REFREV_ENABLE 0b1
 
-#define ADS1263_MODE_CONTINOUS 0b0 //tryb ciągły
-#define ADS1263_MODE_SINGLE 0b1 //tryb one shot
+#define ADS1263_MODE_CONTINOUS 0b0
+#define ADS1263_MODE_SINGLE 0b1
 
 #define ADS1263_CHOP_MODE_ALL_DISABLE 0b00
 #define ADS1263_CHOP_MODE_INPUT_CHOP_ENABLE 0b01
@@ -140,8 +143,8 @@
 
 // == MODE 2 REGISTER ==
 
-#define ADS1263_PGA_ENABLED   0b0  // Default: PGA włączony
-#define ADS1263_PGA_BYPASSED  0b1  // Ominięcie PGA
+#define ADS1263_PGA_ENABLED   0b0  // Default: PGA enabled
+#define ADS1263_PGA_BYPASSED  0b1  // Bypass PGA
 
 #define ADS1263_GAIN_1   0b000  // Default: 1 V/V
 #define ADS1263_GAIN_2   0b001
@@ -169,7 +172,7 @@
 
 // == INPMUX REGISTER ==
 
-// Mux P - wejście dodatnie
+// Positive input multiplexer
 #define ADS1263_MUXP_AIN0        0b0000
 #define ADS1263_MUXP_AIN1        0b0001
 #define ADS1263_MUXP_AIN2        0b0010
@@ -181,13 +184,13 @@
 #define ADS1263_MUXP_AIN8        0b1000
 #define ADS1263_MUXP_AIN9        0b1001
 #define ADS1263_MUXP_AINCOM      0b1010
-#define ADS1263_MUXP_TEMP        0b1011  // Temperaturowy czujnik (plus)
+#define ADS1263_MUXP_TEMP        0b1011  // Temperature sensor positive node
 #define ADS1263_MUXP_AVDD        0b1100  // Analog power supply monitor +
 #define ADS1263_MUXP_DVDD        0b1101  // Digital power supply monitor +
 #define ADS1263_MUXP_TDAC_POS    0b1110  // TDAC test signal +
-#define ADS1263_MUXP_FLOAT       0b1111  // Open (brak połączenia)
+#define ADS1263_MUXP_FLOAT       0b1111  // Open input
 
-// Mux N - wejście negatywne 
+// Negative input multiplexer
 
 #define ADS1263_MUXN_AIN0        0b0000
 #define ADS1263_MUXN_AIN1        0b0001
@@ -200,11 +203,11 @@
 #define ADS1263_MUXN_AIN8        0b1000
 #define ADS1263_MUXN_AIN9        0b1001
 #define ADS1263_MUXN_AINCOM      0b1010
-#define ADS1263_MUXN_TEMP        0b1011  // Temperaturowy czujnik (minus)
+#define ADS1263_MUXN_TEMP        0b1011  // Temperature sensor negative node
 #define ADS1263_MUXN_AVDD        0b1100  // Analog power supply monitor -
 #define ADS1263_MUXN_DVDD        0b1101  // Digital power supply monitor -
 #define ADS1263_MUXN_TDAC_NEG    0b1110  // TDAC test signal -
-#define ADS1263_MUXN_FLOAT       0b1111  // Open (brak połączenia)
+#define ADS1263_MUXN_FLOAT       0b1111  // Open input
 
 
 // == IDACMUX REGISTER ==
@@ -283,7 +286,7 @@
 #define ADS1263_TDACP_DISCONNECTED   0b0
 #define ADS1263_TDACP_CONNECTED_AIN6 0b1
 
-// TDACP Magnitude (V w odniesieniu do V_AVSS)
+// TDACP magnitude in volts relative to AVSS
 #define ADS1263_TDACP_4_5V    0b01001
 #define ADS1263_TDACP_3_5V    0b01000
 #define ADS1263_TDACP_3_0V    0b00111
@@ -307,7 +310,7 @@
 #define ADS1263_TDACN_DISCONNECTED   0b0
 #define ADS1263_TDACN_CONNECTED_AIN7 0b1
 
-// TDACN Magnitude 
+// TDACN magnitude
 #define ADS1263_TDACN_4_5V    0b01001
 #define ADS1263_TDACN_3_5V    0b01000
 #define ADS1263_TDACN_3_0V    0b00111
@@ -327,16 +330,16 @@
 #define ADS1263_TDACN_1_5V      0b11000
 #define ADS1263_TDACN_0_5V      0b11001
 
-//GPIOCON register
+// GPIOCON register
 #define ADS1263_PIN_NOCONNECTED 0
 #define ADS1263_PIN_CONNECTED 1
 
-//GPIODIR register
+// GPIODIR register
 #define ADS1263_PIN_OUTPUT 0
 #define ADS1263_PIN_INPUT 1
 
 
-//GPIODAT register
+// GPIODAT register
 #define ADS1263_PIN_LOW 0
 #define ADS1263_PIN_HIGH 1
 
@@ -349,13 +352,13 @@ static void IRAM_ATTR drdy_isr_handler(void* arg);
 
 bool ads1263_data_ready();
 
-// Wysyła komendę do ADS1263 (np. START, RESET)
+/** @brief Sends an ADS1263 command such as START or RESET. */
 uint8_t ads1263_sendCommand(uint8_t cmd, int index);
 
-// Zapisuje do rejestru ADS1263 (WREG)
+/** @brief Writes one ADS1263 register using WREG. */
 uint8_t ads1263_writeReg(uint8_t reg, uint8_t data, int index);
 
-// Czyta 3 bajty z rejestru (RREG + 2 dummy bajty)
+/** @brief Reads one ADS1263 register using the RREG command frame. */
 uint32_t ads1263_readReg(uint8_t reg, uint8_t index);
 
 
@@ -370,7 +373,7 @@ uint8_t ads1263_stop2(int index) ;
 uint8_t ads1263_setPowerReg(int index, uint8_t reset, uint8_t vbias, uint8_t intref);
 uint32_t ads1263_readPowerReg(int index);
 uint8_t ads1263_setInterfaceReg(int index, uint8_t timeout, uint8_t status, uint8_t crc);
-uint32_t ads1263_readInterfaceReg(int index)
+uint32_t ads1263_readInterfaceReg(int index);
 uint8_t ads1263_setMode0Reg(int index, uint8_t refrev, uint8_t runmode, uint8_t chop, uint8_t delay);
 uint32_t ads1263_readMode0Reg(int index);
 uint8_t ads1263_setMode1Reg(int index, uint8_t filter, uint8_t sbadc, uint8_t sbpol, uint8_t sbmag);
